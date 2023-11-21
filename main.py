@@ -1,4 +1,5 @@
 from collections import UserDict
+from datetime import datetime, timedelta
 import re
 
 class Field:
@@ -26,14 +27,49 @@ class Phone(Field):
         if self.value is not None and not re.match(r'^\d{10}$', str(self.value)):
             raise ValueError("Недійсний формат номера телефону. Він повинен містити 10 цифр.")
 
+class Birthday(Field):
+    def __init__(self, value=None):
+        super().__init__(value)
+        self.validate()
+
+    def validate(self):
+        if self.value is not None:
+            try:
+                datetime.strptime(str(self.value), '%Y-%m-%d')
+            except ValueError:
+                raise ValueError("Недійсний формат дня народження. Використовуйте формат 'YYYY-MM-DD'.")
+
+
 class Record:
-    def __init__(self, name):
+    def __init__(self, name, birthday=None):
         self.name = Name(name)
         self.phones = []
+        self.birhday = Birthday(birthday)
 
     def __str__(self):
         phones_str = '; '.join(str(phone) for phone in self.phones)
-        return f"Контактна особа: {self.name}, телефони: {phones_str}"
+        birthday_str = f", день народження: {self.birthday}" if self.birthday.value else ""
+        return f"Контактна особа: {self.name}{birthday_str}, телефони: {phones_str}"
+
+    def days_to_birthday(self):
+        if self.birthday.value:
+            today = datetime.now()
+            next_birthday = datetime(today.year, self.birthday.value.month, self.birthday.value.day)
+            if today > next_birthday:
+                next_birthday = datetime(today.year + 1, self.birthday.value.month, self.birthday.value.day)
+            days_left = (next_birthday - today).days
+            return days_left
+        return None
+
+    @property
+    def birthday(self):
+        return self._birthday
+
+    @birthday.setter
+    def birthday(self, value):
+        self._birthday = Birthday(value)
+
+
 
     def add_phone(self, phone):
         phone_obj = Phone(phone)
@@ -64,6 +100,20 @@ class AddressBook(UserDict):
     def delete(self, name):
         if name in self.data:
             del self.data[name]
+
+
+    # DZ11
+    def iterator(self, page_size=5):
+        records = list(self.data.values())
+        total_records = len(records)
+        start = 0
+        while start < total_records:
+            yield records[start:start+page_size]
+            start += page_size
+
+
+
+
 
 # # Створення нової адресної книги
 # book = AddressBook()
