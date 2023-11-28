@@ -1,6 +1,7 @@
 from collections import UserDict
 from datetime import datetime, timedelta
 import re
+import pickle
 
 class Field:
     def __init__(self, value=None):
@@ -114,6 +115,31 @@ class AddressBook(UserDict):
 
 
 
+    # DZ12
+
+    def save_to_disk(self, filename="address_book.pkl"):
+        with open(filename, 'wb') as file:
+            pickle.dump(self.data, file)
+
+    def load_from_disk(self, filename="address_book.pkl"):
+        try:
+            with open(filename, 'rb') as file:
+                self.data = pickle.load(file)
+        except FileNotFoundError:
+            print("Файл не знайдено. Створюємо новий об'єкт AddressBook.")
+            self.data = {}
+
+
+    def search(self, query):
+        results = []
+        for record in self.data.values():
+            if query.lower() in str(record.name).lower() or any(query in str(phone) for phone in record.phones):
+                results.append(record)
+        return results
+
+
+
+
 
 # # Створення нової адресної книги
 # book = AddressBook()
@@ -147,3 +173,32 @@ class AddressBook(UserDict):
 #
 # # Видалення запису Jane
 # book.delete("Jane")
+
+
+
+
+
+# Створюємо об'єкт AddressBook
+# address_book = AddressBook()
+#
+# # Додаємо записи
+# record1 = Record(name="John Doe", birthday="1990-05-15")
+# record1.add_phone("1234567890")
+# record1.add_phone("9876543210")
+#
+# record2 = Record(name="Jane Doe", birthday="1985-08-20")
+# record2.add_phone("5551112233")
+#
+# address_book.add_record(record1)
+# address_book.add_record(record2)
+#
+# # Зберігаємо на диск
+# address_book.save_to_disk()
+#
+# # Відновлюємо з диска
+# address_book.load_from_disk()
+#
+# # Пошук за ім'ям чи номером телефону
+# search_results = address_book.search("Doe")
+# for result in search_results:
+#     print(result)
